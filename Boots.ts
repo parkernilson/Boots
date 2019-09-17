@@ -1,5 +1,6 @@
 import { Observable, of, throwError, Subscriber, Subscription } from 'rxjs';
 import { BootsScript, BootsScriptResult, isBootsScript } from './BootsScript';
+import * as path from 'path';
 
 //TODO: implement --boots-force-sync
 //  NOTE: I may want to just create a script that does that called: 'force-sync'
@@ -12,6 +13,8 @@ export class Boots {
 
     static commandlineFlag: string = '--boots';
     static commandlineForceSyncFlag: string = '--boots-force-sync';
+    /** The base url used to prepend to relative paths to get absolute paths in project. Default value is process.cwd() */
+    private baseUrl: string = process.cwd();
 
     private errors: string[];
 
@@ -95,9 +98,17 @@ export class Boots {
     private _loadModules(scriptPaths: string[]): LoadModulesResult {
         let result: LoadModulesResult = { ok: true };
         //try to require each script path. If any of them are not resolvable, return false.
-        scriptPaths.forEach((value: string, index: number, array: string[]) => {
+        scriptPaths.forEach((scriptPath: string, index: number, array: string[]) => {
             try {
-                let bootsScript: BootsScript = require(value).default;
+                let bootsScript: BootsScript 
+                try { 
+                    //first try to load given path as an absolute path
+                    bootsScript = require(scriptPath).default;
+                } catch(error) {
+                    //then try to load given path with base url prepended
+                    scriptPath = path.join(this.baseUrl, scriptPath);
+                    bootsScript = require(scriptPath).default;
+                }
                 //check if the module is a BootsScript
                 if(isBootsScript(bootsScript)) {
                     //if the script was loaded successfully, push it to the array of scripts
@@ -105,15 +116,15 @@ export class Boots {
                 } else {
                     result.ok = false;
                     result.wrongType
-                        ? result.wrongType.push(value) //if wrongType is defined, push to it
-                        : result.wrongType = [value]; //if wrongType is not defined, define it
+                        ? result.wrongType.push(scriptPath) //if wrongType is defined, push to it
+                        : result.wrongType = [scriptPath]; //if wrongType is not defined, define it
                 }
             } catch(error) {
                 //if error is thrown, the module couldn't be resolved
                 result.ok = false;
                 result.cantResolve
-                    ? result.cantResolve.push(value)
-                    : result.cantResolve = [value];
+                    ? result.cantResolve.push(scriptPath)
+                    : result.cantResolve = [scriptPath];
             }
         })
         return result;
