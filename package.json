@@ -1,0 +1,18 @@
+{
+  "name": "boots",
+  "version": "1.0.0",
+  "description": "A Database Bootstrapper",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "parkernilson",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^12.7.5",
+    "typescript": "^3.6.3"
+  },
+  "dependencies": {
+    "rxjs": "^6.5.3"
+  }
+}
