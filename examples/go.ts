@@ -1,5 +1,10 @@
-import { Boots, BootsScriptResult } from './';
-import { BootsScript } from './BootsScript';
+/**
+ * This example demonstrates a basic implementation using boots.go()
+ */
+
+import { Boots, BootsScriptResult } from '..';
+import { BootsScript } from '../BootsScript';
+
 let boots: Boots = new Boots();
 
 let subscription = boots.go().subscribe({

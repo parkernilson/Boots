@@ -1,10 +1,12 @@
 {
-  "name": "boots",
+  "name": "@parkernilson/boots",
   "version": "1.0.0",
   "description": "A Database Bootstrapper",
-  "main": "index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
   },
   "author": "parkernilson",
   "license": "ISC",
@@ -14,5 +16,24 @@
   },
   "dependencies": {
     "rxjs": "^6.5.3"
-  }
+  },
+  "directories": {
+    "example": "examples"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/parkernilson/Boots.git"
+  },
+  "keywords": [
+    "database",
+    "bootstrapper",
+    "serial",
+    "script",
+    "runner"
+  ],
+  "bugs": {
+    "url": "https://github.com/parkernilson/Boots/issues"
+  },
+  "homepage": "https://github.com/parkernilson/Boots#readme",
+  "prepublish": "tsc"
 }

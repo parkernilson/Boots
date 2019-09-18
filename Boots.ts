@@ -2,35 +2,51 @@ import { Observable, of, throwError, Subscriber, Subscription } from 'rxjs';
 import { BootsScript, BootsScriptResult, isBootsScript } from './BootsScript';
 import * as path from 'path';
 
-//TODO: implement --boots-force-sync
-//  NOTE: I may want to just create a script that does that called: 'force-sync'
-
-//TODO: implement better script path resolution in anticipation of making this into an npm package
-
+/**
+ * Boots is a database bootstrapper, allowing you to specify scripts that should be run before program
+ * execution ensuring that the database has proper structure. Intended for use during development for
+ * specifying different database configurations for tests, etc.
+ * 
+ * Scripts to run are specified in the commandline with:
+ * --boots <relative or absolute path to script module> <another script> ... <many scripts may be specified>
+ * 
+ * Scripts will be run in order of specification and in serial.
+ */
 export class Boots {
 
-    public scriptPaths: string[]; 
+    /** array of paths to scripts that will be run during Boots execution */
+    private scriptPaths: string[]; 
+    /** the boots scripts that have been loaded */
+    private bootsScripts: BootsScript[];
 
+    /** The commandline flag used to pass script names to Boots */
     static commandlineFlag: string = '--boots';
-    static commandlineForceSyncFlag: string = '--boots-force-sync';
+
+    //SETTINGS
     /** The base url used to prepend to relative paths to get absolute paths in project. Default value is process.cwd() */
     private baseUrl: string = process.cwd();
 
+    /** An array of any errors that occur during Boots execution */
     private errors: string[];
-
-    /** the bootsscripts that were loaded */
-    private bootsScripts: BootsScript[];
 
     /** true if no errors have occurred within Boots */
     public ok: boolean;
 
-    constructor() {
+    constructor(options?: BootsOptions) {
         this.scriptPaths = [];
         this.ok = true;
         this.bootsScripts = [];
         this.errors = [];
+
+        if(options) {
+            if(options.baseUrl) this.baseUrl = options.baseUrl;
+        }
     }
 
+    /** 
+     * Load scripts using filepaths that were specified in commandline with --boots, then execute the scripts in order. 
+     * @return - Observable of the result of each script execution.
+     */
     go(): Observable<BootsScriptResult> { //TODO: this should return an observable which will observe the results of the scripts
         //load script paths from command line
         this.scriptPaths = this._loadScriptPaths(); 
@@ -57,6 +73,7 @@ export class Boots {
         }
     }
 
+    /** Log all errors that were recorded during the execution of Boots */
     logErrors(): void {
         for(let error of this.errors) {
             console.log(`Boots Error: ${error}`);
@@ -133,8 +150,10 @@ export class Boots {
     private _loadScriptPaths(): string[] {
         //load the script names from the commandline args here
         let scriptPaths: string[] = [];
+
+        //read commandline arguments and for each argument after --paths flag that isn't another flag, add that argument as a path to the script paths array
         process.argv.forEach((value: string, index: number, array: string[]) => {
-            if(value === Boots.commandlineFlag || value === Boots.commandlineForceSyncFlag) {
+            if(value === Boots.commandlineFlag) {
                 let searching = index + 1;
                 while(searching < array.length && array[searching][0] !== '-') {
                     scriptPaths.push(array[searching]);
@@ -154,4 +173,11 @@ interface LoadModulesResult {
     cantResolve?: string[];
     /** an array of objects representing the paths with wrong types and their types */
     wrongType?: string[];
+}
+
+interface BootsOptions {
+    /** override the default baseUrl for resolving script paths */
+    baseUrl?: string;
+    /** clear the database before running scripts. NOTE: THIS WILL DROP EVERYTHING FROM THE DATABASE. This is intended for development use. */
+    forceSync?: boolean;
 }
